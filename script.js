@@ -1,21 +1,50 @@
-const c=document.getElementById('cursor');addEventListener('pointermove',e=>{if(c){c.style.transform=`translate3d(${e.clientX}px,${e.clientY}px,0)`}});document.querySelectorAll('a,button').forEach(el=>{el.addEventListener('mouseenter',()=>c&&c.classList.add('big'));el.addEventListener('mouseleave',()=>c&&c.classList.remove('big'))});document.querySelectorAll('.product-card,.story,.feature,.giant-bag,.bag3d').forEach(el=>{el.addEventListener('pointermove',e=>{const r=el.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;el.style.transform=`perspective(900px) rotateY(${x*8}deg) rotateX(${-y*8}deg) translateZ(10px)`});el.addEventListener('pointerleave',()=>el.style.transform='')});const send=document.getElementById('send');if(send)send.onclick=()=>{document.getElementById('sent').classList.add('show');send.textContent='SENT ✓'};document.querySelector('.menu')?.addEventListener('click',()=>document.body.classList.toggle('menu-open'));
-// Scroll engine: reveal + depth + horizontal drift + velocity tilt + section progress.
+const cursor=document.getElementById('cursor');
+let pointerX=innerWidth/2,pointerY=innerHeight/2;
+addEventListener('pointermove',e=>{pointerX=e.clientX;pointerY=e.clientY;if(cursor)cursor.style.transform=`translate3d(${e.clientX}px,${e.clientY}px,0)`},{passive:true});
+document.querySelectorAll('a,button').forEach(el=>{el.addEventListener('mouseenter',()=>cursor?.classList.add('big'));el.addEventListener('mouseleave',()=>cursor?.classList.remove('big'))});
+const tiltEls=document.querySelectorAll('.product-card,.story,.feature,.giant-bag,.bag3d');
+tiltEls.forEach(el=>{el.addEventListener('pointermove',e=>{const r=el.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;el.style.setProperty('--hover-rx',`${-y*5}deg`);el.style.setProperty('--hover-ry',`${x*6}deg`);el.classList.add('hovering')});el.addEventListener('pointerleave',()=>{el.classList.remove('hovering');el.style.removeProperty('--hover-rx');el.style.removeProperty('--hover-ry')})});
+const send=document.getElementById('send');if(send)send.onclick=()=>{document.getElementById('sent')?.classList.add('show');send.textContent='SENT ✓'};
+document.querySelector('.menu')?.addEventListener('click',()=>document.body.classList.toggle('menu-open'));
+
+// ROAST/01 SCROLL CHOREOGRAPHER
+// Deliberately scroll-linked: nothing waits for an IntersectionObserver and nothing fades.
+// Elements continuously translate/rotate/scale according to their position in the viewport.
 (()=>{
  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
  if(reduce)return;
- const els=[...document.querySelectorAll('.feature,.product-card,.story,.page-title,.origin-copy,.pairing,.contact-form,.contact-band,.hero-copy,.hero-object,.product-info,.map-stage')];
- els.forEach((el,i)=>{el.dataset.reveal='';el.style.transitionDelay=Math.min(i%4*70,210)+'ms'});
- document.querySelectorAll('.hero-object,.bag3d,.giant-bag,.map-stage,.pairing').forEach((el,i)=>el.dataset.parallax=(i%2?'0.10':'-0.08'));
- document.querySelectorAll('.bean3d,.ring,.map-ring').forEach(el=>el.dataset.rotateScroll=i=>{});
- const line=document.createElement('div');line.className='scroll-line';line.innerHTML='<i></i>';document.body.appendChild(line);
- const num=document.createElement('div');num.className='scroll-number';num.innerHTML='<b>01</b> / 100';document.body.appendChild(num);
- const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('in')}),{threshold:.12,rootMargin:'0px 0px -8% 0px'});els.forEach(e=>io.observe(e));
- let current=0,target=0,velocity=0,last=scrollY;
- function frame(){target=scrollY;velocity+=(target-last-velocity)*.12;last+=(target-last)*.09;current+=(target-current)*.075;
-  const max=document.documentElement.scrollHeight-innerHeight;line.firstElementChild.style.height=(max?current/max*100:0)+'%';num.querySelector('b').textContent=String(Math.min(99,Math.max(1,Math.round(max?current/max*99:1))).padStart(2,'0'));
-  document.querySelectorAll('[data-parallax]').forEach((el,i)=>{const r=el.getBoundingClientRect(),center=r.top+r.height/2-innerHeight/2;const amt=parseFloat(el.dataset.parallax)||.08;el.style.transform=`translate3d(0,${center*amt*-1}px,0)`});
-  document.querySelectorAll('.bean3d,.ring,.map-ring').forEach((el,i)=>{const r=el.getBoundingClientRect(),p=(r.top-innerHeight*.5)/innerHeight;el.style.transform=`translate3d(${Math.sin(current*.003+i)*8}px,${p*-18}px,0) rotate(${p*(i%2?7:-7)+current*.025*(i%2?1:-1)}deg)`});
-  document.querySelectorAll('.marquee-big div').forEach(el=>el.style.transform=`translateX(${-(current*.28%900)}px)`);
-  requestAnimationFrame(frame)}requestAnimationFrame(frame);
- let raf;addEventListener('scroll',()=>{cancelAnimationFrame(raf);raf=requestAnimationFrame(()=>{document.body.style.setProperty('--scroll-v',Math.min(18,Math.abs(scrollY-last)))})},{passive:true});
+ const candidates=[...document.querySelectorAll('.hero-copy,.hero-object,.feature,.product-card,.story,.page-title,.product-visual,.product-info,.map-stage,.origin-copy,.pairing,.contact-form,.contact-band,.bean3d,.ring,.map-ring,.giant-bag,.bag3d')];
+ const items=candidates.map((el,i)=>({el,i,depth:(i%5-2),speed:.55+(i%4)*.18,phase:i*.73}));
+ items.forEach(o=>{o.el.style.willChange='translate, rotate, scale';o.el.style.transformOrigin='center center';o.el.style.setProperty('--scroll-y','0px');o.el.style.setProperty('--scroll-x','0px');o.el.style.setProperty('--scroll-r','0deg');o.el.style.setProperty('--scroll-s','1');o.el.style.setProperty('--hover-rx','0deg');o.el.style.setProperty('--hover-ry','0deg')});
+ const rail=document.createElement('div');rail.className='scroll-line';rail.innerHTML='<i></i>';document.body.appendChild(rail);
+ const counter=document.createElement('div');counter.className='scroll-number';counter.innerHTML='<b>01</b> / <span>100</span>';document.body.appendChild(counter);
+ let current=scrollY,target=scrollY,last=scrollY,velocity=0,raf=0;
+ const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
+ function render(){
+   target=scrollY;current+=(target-current)*.085;velocity+=(target-last-velocity)*.18;last+=(target-last)*.085;
+   const max=Math.max(1,document.documentElement.scrollHeight-innerHeight),progress=clamp(current/max,0,1);
+   rail.firstElementChild.style.height=`${progress*100}%`;counter.querySelector('b').textContent=String(Math.round(progress*99)+1).padStart(2,'0');
+   const reads=items.map(o=>{const r=o.el.getBoundingClientRect();const center=r.top+r.height/2;const distance=(center-innerHeight/2)/innerHeight;return {o,distance,r}});
+   reads.forEach(({o,distance,r})=>{
+     const near=clamp(1-Math.abs(distance)*.72,.05,1);
+     const wave=Math.sin(distance*2.7+o.phase)*12*near;
+     const direction=o.depth*5*near;
+     let y=clamp(-distance*38*o.speed,-70,70)+wave*.35;
+     let x=direction+Math.sin(distance*1.9+o.phase)*18*near;
+     let rot=clamp(distance*5+Math.sin(distance*2+o.phase)*3,-9,9);
+     let scale=1+clamp((1-Math.abs(distance))*0.035,-.03,.035);
+     if(o.el.classList.contains('hero-object')||o.el.classList.contains('product-visual')){y*=1.35;x*=1.5;rot*=1.5;scale=1+clamp(-distance*.035,-.035,.035)}
+     if(o.el.classList.contains('page-title')){x+=Math.sin(current*.002+o.phase)*10;rot+=Math.sin(current*.0015)*1.5}
+     if(o.el.classList.contains('marquee-big'))x=-current*.25;
+     o.el.style.translate=`${x}px ${y}px`;
+     o.el.style.rotate=`calc(${rot}deg + var(--hover-rx))`;
+     o.el.style.scale=`${scale}`;
+   });
+   document.querySelectorAll('.marquee-big div').forEach((el,i)=>{el.style.translate=`${-((current*.32+i*240)%1200)}px 0`});
+   document.querySelectorAll('.ticker span').forEach((el,i)=>{el.style.translate=`${Math.sin(current*.001+i)*6}px 0`});
+   document.querySelectorAll('.bean3d').forEach((el,i)=>{el.style.rotate=`${Math.sin(current*.002+i)*18}deg`;el.style.translate=`${Math.cos(current*.0017+i)*12}px ${Math.sin(current*.0012+i)*18}px`});
+   document.querySelectorAll('.ring,.map-ring').forEach((el,i)=>{el.style.rotate=`${(i? -1:1)*current*.025}deg`;el.style.translate=`${Math.sin(current*.001+i)*18}px ${Math.cos(current*.0013+i)*14}px`});
+   raf=requestAnimationFrame(render);
+ }
+ cancelAnimationFrame(raf);raf=requestAnimationFrame(render);
 })();
