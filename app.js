@@ -1,0 +1,1 @@
+document.getElementById('reveal').onclick=()=>{const s=document.getElementById('secret');s.classList.toggle('hidden');document.getElementById('reveal').textContent=s.classList.contains('hidden')?'DO NOT CLICK':'okay fine 😭'};

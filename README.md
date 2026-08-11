@@ -1,2 +1,3 @@
-# awais-secret-surprise
-A tiny surprise website generated and deployed for Awais.
+# Secret Website
+
+A tiny surprise website generated for Awais. Static HTML/CSS/JS, no database required.
