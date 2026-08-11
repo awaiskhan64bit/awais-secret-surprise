@@ -1,3 +1,2 @@
-# Secret Website
-
-A tiny surprise website generated for Awais. Static HTML/CSS/JS, no database required.
+# NEBULA
+A cinematic 3D web experience built with Three.js, modern CSS, and vanilla JavaScript. Designed for Vercel with no build step and no database required.
